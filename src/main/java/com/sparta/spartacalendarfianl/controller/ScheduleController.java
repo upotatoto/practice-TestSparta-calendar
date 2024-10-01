@@ -17,7 +17,7 @@ public class ScheduleController {
 
     // 일정 생성 (POST)
     @PostMapping
-    public Schedule createSchedule(@RequestBody ScheduleDTO scheduleDTO) {
+    public int createSchedule(@RequestBody ScheduleDTO scheduleDTO) {
         return scheduleService.createSchedule(scheduleDTO);
     }
 

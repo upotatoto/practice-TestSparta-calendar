@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class ScheduleRepository {
@@ -20,13 +21,16 @@ public class ScheduleRepository {
     // 일정 저장 (CREATE)
     public int save(Schedule schedule) {
         String sql = "INSERT INTO schedules (task, author, password, created_at, updated_at) VALUES (?, ?, ?, ?, ?)";
-        return jdbcTemplate.update(sql, schedule.getTask(), schedule.getAuthor(), schedule.getPassword(), schedule.getCreatedAt(), schedule.getUpdatedAt());
+        return jdbcTemplate.update(sql, schedule.getTask(), schedule.getAuthor(), schedule.getPassword(),
+                schedule.getCreatedAt(), schedule.getUpdatedAt());
     }
 
     // 일정 수정 (UPDATE)
-    public int update(Schedule schedule) {
+    public Schedule update(Schedule schedule) {
         String sql = "UPDATE schedules SET task = ?, author = ?, updated_at = ? WHERE id = ? AND password = ?";
-        return jdbcTemplate.update(sql, schedule.getTask(), schedule.getAuthor(), schedule.getUpdatedAt(), schedule.getId(), schedule.getPassword());
+        jdbcTemplate.update(sql, schedule.getTask(), schedule.getAuthor(), schedule.getUpdatedAt(),
+                schedule.getId(), schedule.getPassword());
+        return schedule;
     }
 
     // 일정 삭제 (DELETE)
@@ -42,9 +46,10 @@ public class ScheduleRepository {
     }
 
     // 특정 일정 조회 (READ ONE)
-    public Schedule findById(Long id) {
+    public Optional<Schedule> findById(Long id) {
         String sql = "SELECT * FROM schedules WHERE id = ?";
-        return jdbcTemplate.queryForObject(sql, new ScheduleRowMapper(), id);
+        return jdbcTemplate.query(sql, new ScheduleRowMapper(), id)
+                .stream().findFirst();  // Optional로 반환
     }
 
     // ScheduleRowMapper (ResultSet -> Schedule 변환)
