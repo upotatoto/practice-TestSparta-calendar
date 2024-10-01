@@ -1,7 +1,6 @@
 package com.sparta.spartacalendarfianl.controller;
 
 import com.sparta.spartacalendarfianl.dto.UserDTO;
-import com.sparta.spartacalendarfianl.entity.User;
 import com.sparta.spartacalendarfianl.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -13,21 +12,26 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-    // 회원가입
+    // 회원가입 요청 처리
     @PostMapping("/signup")
     public String signup(@RequestBody UserDTO userDTO) {
-        authService.signup(userDTO);
-        return "회원가입 성공";
+        try {
+            authService.signup(userDTO);
+            return "회원가입 성공";
+        } catch (IllegalArgumentException e) {
+            return e.getMessage();  // Return the error message if username is taken
+        }
     }
 
-    // 로그인
+    // 로그인 요청 처리 (DB에서 값 확인)
     @PostMapping("/login")
-    public String login(@RequestParam String username, @RequestParam String password) {
-        User user = authService.login(username, password);
-        if (user != null) {
-            return "로그인 성공";
+    public String login(@RequestBody UserDTO userDTO) {
+        boolean isAuthenticated = authService.authenticate(userDTO.getUsername(), userDTO.getPassword());
+
+        if (isAuthenticated) {
+            return "로그인 성공";  // 성공 메시지 반환
         } else {
-            return "로그인 실패: 잘못된 아이디 또는 비밀번호";
+            return "로그인 실패";  // 실패 메시지 반환
         }
     }
 }

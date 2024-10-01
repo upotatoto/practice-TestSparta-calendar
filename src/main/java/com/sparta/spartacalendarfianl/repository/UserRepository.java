@@ -1,42 +1,21 @@
 package com.sparta.spartacalendarfianl.repository;
 
 import com.sparta.spartacalendarfianl.entity.User;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 @Repository
-public class UserRepository {
+public interface UserRepository extends JpaRepository<User, Long> {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    // Check if a username already exists
+    boolean existsByUsername(String username);
 
-    // 사용자 저장 (회원가입)
-    public int save(User user) {
-        String sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
-        return jdbcTemplate.update(sql, user.getUsername(), user.getEmail(), user.getPassword());
-    }
+    // Find a user by their username
+    User findByUsername(String username);
 
-    // 사용자 조회 (로그인 시 검증)
-    public User findByUsernameAndPassword(String username, String password) {
-        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{username, password}, new UserRowMapper());
-    }
+    // Optional: Find a user by their email
+    boolean existsByEmail(String email);
 
-    // 사용자 RowMapper
-    private static class UserRowMapper implements RowMapper<User> {
-        @Override
-        public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-            User user = new User();
-            user.setId(rs.getLong("id"));
-            user.setUsername(rs.getString("username"));
-            user.setEmail(rs.getString("email"));
-            user.setPassword(rs.getString("password"));
-            return user;
-        }
-    }
+    // Optional: Find a user by username and password (for manual authentication if needed)
+    User findByUsernameAndPassword(String username, String password);
 }

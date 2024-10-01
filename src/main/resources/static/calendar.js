@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentMonth = currentDate.getMonth();
     let currentYear = currentDate.getFullYear();
 
-    // DOM Elements
     const monthNameElement = document.querySelector('.month-name');
     const calendarBody = document.getElementById('calendar-body');
     const scheduleModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
@@ -12,13 +11,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const scheduleIdInput = document.getElementById('scheduleId');
     let schedules = {}; // 날짜별 일정 저장 객체
 
-    // 월 이름을 표시하는 함수
     function updateCalendar(month, year) {
         monthNameElement.textContent = `${year}년 ${month + 1}월`;
         renderCalendar(month, year);
     }
 
-    // 달력 렌더링 함수
     function renderCalendar(month, year) {
         const firstDayOfMonth = new Date(year, month, 1).getDay();
         const lastDateOfMonth = new Date(year, month + 1, 0).getDate();
@@ -45,59 +42,74 @@ document.addEventListener('DOMContentLoaded', function() {
 
         calendarBody.innerHTML = calendarHTML;
 
-        // 날짜 클릭 이벤트 추가
         document.querySelectorAll('.date').forEach(dateElem => {
             dateElem.addEventListener('click', function() {
                 const selectedDate = this.dataset.date;
                 selectedDateInput.value = selectedDate;
-                scheduleIdInput.value = '';  // 새 일정 추가이므로 ID는 비워둠
+                scheduleIdInput.value = '';
                 scheduleModal.show();
             });
         });
     }
 
-    // 일정 추가/수정 폼 제출 처리
+    // 일정 추가/수정 폼 제출 시 처리 (POST 또는 PUT 요청)
     scheduleForm.addEventListener('submit', function(event) {
         event.preventDefault();
+
         const scheduleId = scheduleIdInput.value;
         const task = document.getElementById('task').value;
         const author = document.getElementById('author').value;
         const password = document.getElementById('password').value;
         const selectedDate = selectedDateInput.value;
 
-        if (scheduleId) {
-            // 일정 수정 요청 (PUT)
-            fetch(`/api/schedules/${scheduleId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    task: task,
-                    author: author,
-                    password: password
+        if (!task.trim()) {
+            // 할 일(task)이 비어있다면 일정 삭제 (DELETE 요청)
+            if (scheduleId) {
+                // 일정 ID가 존재할 때만 삭제 가능
+                fetch(`/api/schedules/${scheduleId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    schedules[selectedDate] = { task, author };
-                    updateCalendar(currentMonth, currentYear);
-                    scheduleModal.hide();
-                })
-                .catch(error => console.error('Error:', error));
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('일정 삭제 실패');
+                        }
+                        alert('일정이 삭제되었습니다.');
+                        delete schedules[selectedDate];  // 해당 날짜의 일정 삭제
+                        updateCalendar(currentMonth, currentYear);
+                        scheduleModal.hide();
+                    })
+                    .catch(error => console.error('Error:', error));
+            } else {
+                alert('삭제할 일정이 없습니다.');
+                scheduleModal.hide();
+            }
         } else {
-            // 새로운 일정 추가 요청 (POST)
-            fetch('/api/schedules', {
-                method: 'POST',
+            // 할 일(task)이 비어있지 않다면 POST 또는 PUT 요청 (일정 추가/수정)
+            const scheduleData = {
+                task: task,
+                author: author,
+                password: password,
+                createdAt: selectedDate,
+                updatedAt: selectedDate
+            };
+
+            let requestUrl = '/api/schedules';
+            let method = 'POST';
+
+            if (scheduleId) {
+                requestUrl = `/api/schedules/${scheduleId}`;
+                method = 'PUT';
+            }
+
+            fetch(requestUrl, {
+                method: method,
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    date: selectedDate,
-                    task: task,
-                    author: author,
-                    password: password
-                })
+                body: JSON.stringify(scheduleData)
             })
                 .then(response => response.json())
                 .then(data => {
@@ -105,11 +117,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateCalendar(currentMonth, currentYear);
                     scheduleModal.hide();
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => console.error(`${method} 요청 오류:`, error));
         }
     });
 
-    // 이전 달로 이동
     document.querySelector('.btn-prev').addEventListener('click', function() {
         if (currentMonth === 0) {
             currentMonth = 11;
@@ -120,7 +131,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCalendar(currentMonth, currentYear);
     });
 
-    // 다음 달로 이동
     document.querySelector('.btn-next').addEventListener('click', function() {
         if (currentMonth === 11) {
             currentMonth = 0;
@@ -131,10 +141,8 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCalendar(currentMonth, currentYear);
     });
 
-    // 초기 달력 렌더링
     updateCalendar(currentMonth, currentYear);
 
-    // 서버에서 기존 일정 불러오기 (GET 요청)
     fetch('/api/schedules')
         .then(response => response.json())
         .then(data => {
