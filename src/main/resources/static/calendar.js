@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const currentDate = new Date();
     let currentMonth = currentDate.getMonth();
     let currentYear = currentDate.getFullYear();
@@ -32,7 +32,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     calendarHTML += '<td></td>';
                 } else {
                     const dateStr = `${year}-${month + 1}-${dayCount}`;
-                    const scheduleText = schedules[dateStr] ? `<br><span>${schedules[dateStr].task}</span>` : '';
+                    const scheduleText = schedules[dateStr]
+                        ? `<br><span>${schedules[dateStr].task}</span> <button class="btn btn-danger btn-sm delete-btn" data-id="${schedules[dateStr].id}" data-date="${dateStr}">삭제</button>`
+                        : '';
                     calendarHTML += `<td class="date" data-date="${dateStr}">${dayCount}${scheduleText}</td>`;
                     dayCount++;
                 }
@@ -42,31 +44,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
         calendarBody.innerHTML = calendarHTML;
 
+        // 날짜 클릭 이벤트
         document.querySelectorAll('.date').forEach(dateElem => {
-            dateElem.addEventListener('click', function() {
+            dateElem.addEventListener('click', function () {
                 const selectedDate = this.dataset.date;
                 selectedDateInput.value = selectedDate;
                 scheduleIdInput.value = schedules[selectedDate] ? schedules[selectedDate].id : '';  // 일정 ID 설정
                 scheduleModal.show();
             });
         });
-    }
 
-    // 일정 추가/수정/삭제 폼 제출 시 처리 (POST, PUT, DELETE 요청)
-    scheduleForm.addEventListener('submit', function(event) {
-        event.preventDefault();
+        // 삭제 버튼 이벤트
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function (event) {
+                const scheduleId = this.dataset.id;
+                const selectedDate = this.dataset.date;
 
-        const scheduleId = scheduleIdInput.value;
-        const task = document.getElementById('task').value;
-        const author = document.getElementById('author').value;
-        const password = document.getElementById('password').value;
-        const selectedDate = selectedDateInput.value;
-
-        if (!task.trim()) {
-            // 할 일(task)이 비어있다면 일정 삭제 (DELETE 요청)
-            if (scheduleId) {
-                // 일정 ID가 존재할 때만 삭제 가능
-                if (confirm("일정을 삭제하시겠습니까?")) {  // 삭제 확인 메시지 추가
+                if (confirm('정말로 이 일정을 삭제하시겠습니까?')) {
                     fetch(`/api/schedules/${scheduleId}`, {
                         method: 'DELETE',
                         headers: {
@@ -78,54 +72,58 @@ document.addEventListener('DOMContentLoaded', function() {
                                 throw new Error('일정 삭제 실패');
                             }
                             alert('일정이 삭제되었습니다.');
-                            delete schedules[selectedDate];  // 해당 날짜의 일정 삭제
-                            updateCalendar(currentMonth, currentYear);
-                            scheduleModal.hide();
+                            // 페이지 새로고침
+                            window.location.reload();  // 삭제 후 페이지 새로고침
                         })
                         .catch(error => console.error('Error:', error));
-                } else {
-                    scheduleModal.hide();
                 }
-            } else {
-                alert('삭제할 일정이 없습니다.');
-                scheduleModal.hide();
-            }
-        } else {
-            // 할 일(task)이 비어있지 않다면 POST 또는 PUT 요청 (일정 추가/수정)
-            const scheduleData = {
-                task: task,
-                author: author,
-                password: password,
-                createdAt: selectedDate,
-                updatedAt: selectedDate
-            };
+            });
+        });
+    }
 
-            let requestUrl = '/api/schedules';
-            let method = 'POST';
+    // 일정 추가/수정 폼 제출 시 처리 (POST 또는 PUT 요청)
+    scheduleForm.addEventListener('submit', function (event) {
+        event.preventDefault();
 
-            if (scheduleId) {
-                requestUrl = `/api/schedules/${scheduleId}`;
-                method = 'PUT';
-            }
+        const scheduleId = scheduleIdInput.value;
+        const task = document.getElementById('task').value;
+        const author = document.getElementById('author').value;
+        const password = document.getElementById('password').value;
+        const selectedDate = selectedDateInput.value;
 
-            fetch(requestUrl, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(scheduleData)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    schedules[selectedDate] = { id: data.id, task, author };  // ID 저장
-                    updateCalendar(currentMonth, currentYear);
-                    scheduleModal.hide();
-                })
-                .catch(error => console.error(`${method} 요청 오류:`, error));
+        const scheduleData = {
+            task: task,
+            author: author,
+            password: password,
+            createdAt: selectedDate,
+            updatedAt: selectedDate
+        };
+
+        let requestUrl = '/api/schedules';
+        let method = 'POST';
+
+        if (scheduleId) {
+            requestUrl = `/api/schedules/${scheduleId}`;
+            method = 'PUT';
         }
+
+        fetch(requestUrl, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(scheduleData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                schedules[selectedDate] = { id: data.id, task, author };  // ID 저장
+                updateCalendar(currentMonth, currentYear);
+                scheduleModal.hide();
+            })
+            .catch(error => console.error(`${method} 요청 오류:`, error));
     });
 
-    document.querySelector('.btn-prev').addEventListener('click', function() {
+    document.querySelector('.btn-prev').addEventListener('click', function () {
         if (currentMonth === 0) {
             currentMonth = 11;
             currentYear--;
@@ -135,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCalendar(currentMonth, currentYear);
     });
 
-    document.querySelector('.btn-next').addEventListener('click', function() {
+    document.querySelector('.btn-next').addEventListener('click', function () {
         if (currentMonth === 11) {
             currentMonth = 0;
             currentYear++;
@@ -147,11 +145,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     updateCalendar(currentMonth, currentYear);
 
+    // 서버에서 기존 일정 불러오기
     fetch('/api/schedules')
         .then(response => response.json())
         .then(data => {
             data.forEach(schedule => {
-                schedules[schedule.date] = { id: schedule.id, task: schedule.task, author: schedule.author };  // 일정 ID 포함
+                schedules[schedule.date] = { id: schedule.id, task: schedule.task, author: schedule.author };
             });
             updateCalendar(currentMonth, currentYear);
         })
