@@ -46,13 +46,13 @@ document.addEventListener('DOMContentLoaded', function() {
             dateElem.addEventListener('click', function() {
                 const selectedDate = this.dataset.date;
                 selectedDateInput.value = selectedDate;
-                scheduleIdInput.value = '';
+                scheduleIdInput.value = schedules[selectedDate] ? schedules[selectedDate].id : '';  // 일정 ID 설정
                 scheduleModal.show();
             });
         });
     }
 
-    // 일정 추가/수정 폼 제출 시 처리 (POST 또는 PUT 요청)
+    // 일정 추가/수정/삭제 폼 제출 시 처리 (POST, PUT, DELETE 요청)
     scheduleForm.addEventListener('submit', function(event) {
         event.preventDefault();
 
@@ -66,22 +66,26 @@ document.addEventListener('DOMContentLoaded', function() {
             // 할 일(task)이 비어있다면 일정 삭제 (DELETE 요청)
             if (scheduleId) {
                 // 일정 ID가 존재할 때만 삭제 가능
-                fetch(`/api/schedules/${scheduleId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('일정 삭제 실패');
+                if (confirm("일정을 삭제하시겠습니까?")) {  // 삭제 확인 메시지 추가
+                    fetch(`/api/schedules/${scheduleId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
                         }
-                        alert('일정이 삭제되었습니다.');
-                        delete schedules[selectedDate];  // 해당 날짜의 일정 삭제
-                        updateCalendar(currentMonth, currentYear);
-                        scheduleModal.hide();
                     })
-                    .catch(error => console.error('Error:', error));
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('일정 삭제 실패');
+                            }
+                            alert('일정이 삭제되었습니다.');
+                            delete schedules[selectedDate];  // 해당 날짜의 일정 삭제
+                            updateCalendar(currentMonth, currentYear);
+                            scheduleModal.hide();
+                        })
+                        .catch(error => console.error('Error:', error));
+                } else {
+                    scheduleModal.hide();
+                }
             } else {
                 alert('삭제할 일정이 없습니다.');
                 scheduleModal.hide();
@@ -113,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
                 .then(response => response.json())
                 .then(data => {
-                    schedules[selectedDate] = { task, author };
+                    schedules[selectedDate] = { id: data.id, task, author };  // ID 저장
                     updateCalendar(currentMonth, currentYear);
                     scheduleModal.hide();
                 })
@@ -147,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             data.forEach(schedule => {
-                schedules[schedule.date] = { task: schedule.task, author: schedule.author };
+                schedules[schedule.date] = { id: schedule.id, task: schedule.task, author: schedule.author };  // 일정 ID 포함
             });
             updateCalendar(currentMonth, currentYear);
         })
