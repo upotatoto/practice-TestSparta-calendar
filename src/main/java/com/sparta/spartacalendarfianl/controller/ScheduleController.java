@@ -35,7 +35,7 @@ public class ScheduleController {
 
     // 일정 수정 (PUT)
     @PutMapping("/{id}")
-    public Schedule updateSchedule(@PathVariable Long id, @RequestBody ScheduleDTO scheduleDTO) {
+    public int updateSchedule(@PathVariable Long id, @RequestBody ScheduleDTO scheduleDTO) {
         return scheduleService.updateSchedule(id, scheduleDTO);
     }
 

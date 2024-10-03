@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;  // YYYY-MM-DD HH:MM:SS 형식
     }
 
-    // 일정 추가/수정/삭제 처리 함수
+// 일정 추가/수정/삭제 처리 함수
     scheduleForm.addEventListener('submit', function (event) {
         event.preventDefault();
 
@@ -90,17 +90,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const password = document.getElementById('password').value;
         const selectedDate = selectedDateInput.value;
 
-        // 현재 날짜와 시간을 합친 형식으로 변환
-        const now = new Date();
-        const createdAt = getFormattedDateTime(now);  // 현재 시간을 기준으로 만든 datetime
-        const updatedAt = createdAt;
+        // 현재 날짜와 시간을 ISO 형식으로 변환
+        const now = new Date().toISOString();  // 현재 시간을 ISO 형식으로 저장 (2023-10-01T10:00:00.000Z)
 
         const scheduleData = {
             task: task,
             author: author,
             password: password,
-            createdAt: createdAt,  // 날짜와 시간 형식으로 전송
-            updatedAt: updatedAt
+            createdAt: now,  // ISO 형식으로 전송
+            updatedAt: now   // ISO 형식으로 전송
         };
 
         if (!task.trim()) {
@@ -132,6 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 .catch(error => console.error(`${method} 요청 오류:`, error));
         }
     });
+
 
     // 이전 달로 이동
     document.querySelector('.btn-prev').addEventListener('click', function () {
