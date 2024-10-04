@@ -97,8 +97,8 @@ scheduleForm.addEventListener('submit', function (event) {
 
 - `GET /api/schedules` : 모든 일정 가져오기
 - `POST /api/schedules` : 새로운 일정 추가
-- `PUT /api/schedules/{id}` : 일정 수정
-- `DELETE /api/schedules/{id}` : 일정 삭제
+- `PUT /api/schedules/{id}` : 일정 수정 [존재만 할 뿐 실현하지 못함]
+- `DELETE /api/schedules/{id}` : 일정 삭제 [존재만 할 뿐 실현하지 못함]
 
 ## 🖥️ 프로젝트 구조
 
