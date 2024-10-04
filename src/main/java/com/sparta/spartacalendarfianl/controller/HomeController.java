@@ -12,6 +12,12 @@ public class HomeController {
         return "index";  // templates 폴더의 index.html을 반환
     }
 
+    // 로그인 페이지 반환
+    @GetMapping("/login")
+    public String loginPage() {
+        return "index";  // templates/login.html을 반환
+    }
+
     // 회원가입 페이지 반환
     @GetMapping("/signup")
     public String signupPage() {
